@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCQ Test</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; display: flex; justify-content: center; }
+.container { background: #fff; padding: 20px; border-radius: 12px; max-width: 600px; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+h1 { text-align: center; color: #1e3a8a; }
+.question-image { max-width: 100%; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; }
+.choices label { display: block; margin: 6px 0; }
+button { margin: 8px 4px 0; padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; }
+button.primary { background: #2563eb; color: #fff; }
+button.secondary { background: #fff; color: #2563eb; border: 1px solid #2563eb; }
+.result { margin-top: 20px; padding: 12px; border-radius: 8px; background: #ecfdf5; border: 1px solid #d1fae5; }
+.nav { display: flex; justify-content: space-between; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MCQ Test</h1>
+
+<input type="file" id="imageInput" multiple accept="image/*">
+<div id="quiz" style="display:none;">
+  <div id="qNum"></div>
+  <img id="qImage" class="question-image" alt="Question">
+  <div class="choices" id="choices"></div>
+  <div class="nav">
+    <button class="secondary" id="prevBtn">Prev</button>
+    <button class="secondary" id="nextBtn">Next</button>
+    <button class="primary" id="submitBtn">Submit</button>
+  </div>
+  <div id="result" class="result" style="display:none;"></div>
+</div>
+</div>
+
+<script>
+// ======= Answers JSON =======
+const answers = {
+  '1.png': 'A',
+  '2.png': 'B',
+  '3.png': 'C',
+  '4.png': 'D',
+  '5.png': 'A'
+  // Add more if needed
+};
+
+let questions = [], current = 0, userAnswers = [];
+
+// ======= Handle file selection =======
+document.getElementById('imageInput').addEventListener('change', function(e){
+  const files = Array.from(e.target.files);
+  if(files.length === 0) return;
+  
+  // Build questions array
+  questions = files.map(f => ({file: URL.createObjectURL(f), name: f.name, answer: answers[f.name] || null}));
+  userAnswers = Array(questions.length).fill(null);
+  
+  document.getElementById('quiz').style.display = 'block';
+  showQuestion(0);
+});
+
+// ======= Quiz functions =======
+function showQuestion(i){
+  if(i < 0 || i >= questions.length) return;
+  current = i;
+  const q = questions[i];
+  document.getElementById('qNum').textContent = `Question ${i+1} of ${questions.length}`;
+  document.getElementById('qImage').src = q.file;
+  const ch = document.getElementById('choices');
+  ch.innerHTML = '';
+  ['A','B','C','D'].forEach(opt => {
+    ch.innerHTML += `<label><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`;
+  });
+  if(userAnswers[i]) document.querySelector(`input[name=q${i}][value=${userAnswers[i]}]`).checked = true;
+}
+
+function saveAns(){ const sel = document.querySelector(`input[name=q${current}]:checked`); userAnswers[current] = sel ? sel.value : null; }
+function nextQ(){ if(current < questions.length-1){ saveAns(); showQuestion(current+1); } }
+function prevQ(){ if(current > 0){ saveAns(); showQuestion(current-1); } }
+
+function submitTest(){
+  saveAns();
+  let score = 0;
+  questions.forEach(q => { if(q.answer && userAnswers[questions.indexOf(q)] === q.answer) score++; });
+  const resDiv = document.getElementById('result');
+  resDiv.style.display = 'block';
+  resDiv.textContent = `Score: ${score} / ${questions.length}`;
+}
+
+// ======= Event bindings =======
+document.getElementById('nextBtn').onclick = nextQ;
+document.getElementById('prevBtn').onclick = prevQ;
+document.getElementById('submitBtn').onclick = submitTest;
+</script>
+</body>
+</html>
